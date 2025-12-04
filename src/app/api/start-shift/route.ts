@@ -7,6 +7,10 @@ import {
   createShift
 } from '@/lib/shifts'
 
+// Tối ưu: Không cache API này
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest) {
   try {
     const { code } = await request.json()

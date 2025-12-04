@@ -17,6 +17,17 @@ export interface Shift {
 }
 
 /**
+ * Lấy thời gian hiện tại ở VN dưới dạng ISO string
+ * VN là UTC+7, nên lấy UTC time và cộng thêm 7 giờ
+ */
+function getVNTimeISOString(): string {
+  const now = new Date();
+  // Lấy UTC time và cộng thêm 7 giờ (offset VN)
+  const vnTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return vnTime.toISOString();
+}
+
+/**
  * Tìm staff theo code
  */
 export async function findStaffByCode(code: string): Promise<Staff | null> {
@@ -51,11 +62,13 @@ export async function hasActiveShift(staffId: string): Promise<boolean> {
  * Tạo ca mới
  */
 export async function createShift(staffId: string, sessionToken: string): Promise<Shift> {
+  const vnTime = getVNTimeISOString();
   const { data, error } = await supabase
     .from('shift')
     .insert({
       staff_id: staffId,
       session_token: sessionToken,
+      time_in: vnTime,
     })
     .select()
     .single();
@@ -111,9 +124,10 @@ export async function findActiveShiftByToken(
  * Kết thúc ca
  */
 export async function endShift(sessionToken: string): Promise<Shift> {
+  const vnTime = getVNTimeISOString();
   const { data, error } = await supabase
     .from('shift')
-    .update({ time_out: new Date().toISOString() })
+    .update({ time_out: vnTime })
     .eq('session_token', sessionToken)
     .is('time_out', null)
     .select()

@@ -13,5 +13,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Tối ưu: Tạo client một lần và reuse
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
+
+export const supabase = (() => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      // Tối ưu connection
+      auth: {
+        persistSession: false, // Không persist session vì dùng cookie
+        autoRefreshToken: false,
+      },
+    });
+  }
+  return supabaseInstance;
+})();
 
