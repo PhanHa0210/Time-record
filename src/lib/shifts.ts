@@ -63,8 +63,7 @@ export async function hasActiveShift(staffId: string): Promise<boolean> {
  */
 export async function createShift(staffId: string, sessionToken: string): Promise<Shift> {
   const vnTime = getVNTimeISOString();
-  const { data, error } = await supabase
-    .from('shift')
+  const { data, error } = await (supabase.from('shift') as any)
     .insert({
       staff_id: staffId,
       session_token: sessionToken,
@@ -77,7 +76,7 @@ export async function createShift(staffId: string, sessionToken: string): Promis
     throw new Error('Failed to create shift');
   }
 
-  return data;
+  return data as Shift;
 }
 
 /**
@@ -108,13 +107,13 @@ export async function findActiveShiftByToken(
 
   return {
     shift: {
-      id: data.id,
-      staff_id: data.staff_id,
-      shift_date: data.shift_date,
-      session_token: data.session_token,
-      time_in: data.time_in,
-      time_out: data.time_out,
-      created_at: data.created_at,
+      id: (data as any).id,
+      staff_id: (data as any).staff_id,
+      shift_date: (data as any).shift_date,
+      session_token: (data as any).session_token,
+      time_in: (data as any).time_in,
+      time_out: (data as any).time_out,
+      created_at: (data as any).created_at,
     },
     staff: (data as any).staff,
   };
@@ -125,8 +124,7 @@ export async function findActiveShiftByToken(
  */
 export async function endShift(sessionToken: string): Promise<Shift> {
   const vnTime = getVNTimeISOString();
-  const { data, error } = await supabase
-    .from('shift')
+  const { data, error } = await (supabase.from('shift') as any)
     .update({ time_out: vnTime })
     .eq('session_token', sessionToken)
     .is('time_out', null)
@@ -137,5 +135,5 @@ export async function endShift(sessionToken: string): Promise<Shift> {
     throw new Error('Failed to end shift');
   }
 
-  return data;
+  return data as Shift;
 }
