@@ -26,16 +26,30 @@ export default function CheckPage() {
   const [workDuration, setWorkDuration] = useState(0);
   const [staffName, setStaffName] = useState<string>('');
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
+  const [isCheckingShift, setIsCheckingShift] = useState(true);
 
   // Khi load: check cookie, nếu có thì tự động kết thúc ca (chạy ở background)
+  // Tối ưu: Chạy ngay sau khi component mount, không delay
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAndEndShift = async () => {
       try {
-        const res = await fetch('/api/who-am-i', { cache: 'no-store' });
-        if (!res.ok) return;
+        // Sử dụng AbortController để có thể cancel nếu component unmount
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout 5s
+        
+        const res = await fetch('/api/who-am-i', { 
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!res.ok || !isMounted) return;
 
         const data = await res.json();
-        if (data.ok && data.shift) {
+        if (data.ok && data.shift && isMounted) {
           const timeIn = new Date(data.shift.time_in).getTime();
           const duration = Math.max(0, Math.round((Date.now() - timeIn) / 60000));
           
@@ -44,16 +58,27 @@ export default function CheckPage() {
           setNotificationType('end');
           setShowNotification(true);
           
+          // End shift ở background, không chờ response
           fetch('/api/end-shift', { method: 'POST' }).catch(() => {});
         }
       } catch (err) {
-        console.error('Error:', err);
+        // Ignore errors silently - không ảnh hưởng UX
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error:', err);
+        }
+      } finally {
+        if (isMounted) {
+          setIsCheckingShift(false);
+        }
       }
     };
 
-    // Delay nhỏ để UI render trước
-    const timer = setTimeout(checkAndEndShift, 100);
-    return () => clearTimeout(timer);
+    // Chạy ngay lập tức, không delay
+    checkAndEndShift();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleStartShift = async (e: React.FormEvent) => {
@@ -99,7 +124,12 @@ export default function CheckPage() {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">Bắt đầu ca làm việc</h1>
+          <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+            Bắt đầu ca làm việc
+            {isCheckingShift && (
+              <span className="ml-2 inline-block h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+            )}
+          </h1>
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">

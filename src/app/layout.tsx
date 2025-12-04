@@ -26,6 +26,15 @@ export default function RootLayout({
     <html lang="vi">
       <head>
         {/* Preconnect to Supabase for faster API calls */}
+        {/* Preconnect đến domain Supabase project cụ thể nếu có */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link 
+            rel="preconnect" 
+            href={new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin} 
+            crossOrigin="anonymous" 
+          />
+        )}
+        {/* Preconnect to common Supabase domains */}
         <link rel="preconnect" href="https://supabase.co" />
         <link rel="dns-prefetch" href="https://supabase.co" />
       </head>
