@@ -3,10 +3,11 @@
 interface NotificationModalProps {
   isOpen: boolean;
   duration: number; // phút
+  staffName?: string;
   onClose: () => void;
 }
 
-export default function NotificationModal({ isOpen, duration, onClose }: NotificationModalProps) {
+export default function NotificationModal({ isOpen, duration, staffName, onClose }: NotificationModalProps) {
   if (!isOpen) return null;
 
   const hours = Math.floor(duration / 60);
@@ -33,8 +34,19 @@ export default function NotificationModal({ isOpen, duration, onClose }: Notific
             </svg>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Đã kết thúc ca thành công!</h2>
+          {/* Title with staff name */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {staffName ? (
+              <>
+                Chào mừng trở lại, <span className="text-blue-600">{staffName}</span>!
+              </>
+            ) : (
+              'Đã kết thúc ca thành công!'
+            )}
+          </h2>
+          {staffName && (
+            <p className="text-gray-600 mb-4">Đã kết thúc ca thành công!</p>
+          )}
 
           {/* Duration */}
           <div className="my-6">

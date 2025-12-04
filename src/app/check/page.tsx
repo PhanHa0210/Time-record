@@ -14,15 +14,15 @@ interface Shift {
 }
 
 export default function CheckPage() {
-  const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [showNotification, setShowNotification] = useState(false);
   const [workDuration, setWorkDuration] = useState(0);
+  const [staffName, setStaffName] = useState<string>('');
 
-  // Khi load: check cookie, nếu có thì tự động kết thúc ca
+  // Khi load: check cookie, nếu có thì tự động kết thúc ca (chạy ở background)
   useEffect(() => {
     checkAndEndShift();
   }, []);
@@ -31,7 +31,6 @@ export default function CheckPage() {
     try {
       const res = await fetch('/api/who-am-i');
       if (!res.ok) {
-        setStatus('ready');
         return;
       }
 
@@ -45,14 +44,13 @@ export default function CheckPage() {
               (Date.now() - new Date(data.shift.time_in).getTime()) / 60000
             );
             setWorkDuration(duration);
+            setStaffName(data.staff?.name || '');
             setShowNotification(true);
           }
         }
       }
     } catch (err) {
       console.error('Error:', err);
-    } finally {
-      setStatus('ready');
     }
   };
 
@@ -82,17 +80,6 @@ export default function CheckPage() {
       setLoading(false);
     }
   };
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang kiểm tra...</p>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-md mx-auto">
@@ -115,7 +102,8 @@ export default function CheckPage() {
             <div>
               <label className="block mb-2 font-semibold text-gray-700">Mã nhân viên</label>
               <input
-                type="text"
+                type="number"
+                inputMode="numeric"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -141,6 +129,7 @@ export default function CheckPage() {
       <NotificationModal
         isOpen={showNotification}
         duration={workDuration}
+        staffName={staffName}
         onClose={() => setShowNotification(false)}
       />
     </div>
